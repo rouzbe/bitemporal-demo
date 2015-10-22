@@ -9,7 +9,7 @@ let $c := admin:database-set-triple-index($config, $Sample-Database, fn:true())
 return (
   temporal:set-use-lsqt("myTemporal",fn:true()),
   admin:save-configuration($c)
-)</query><query name="Luna in SFO" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: Luna lived in San Francisco between 2001 and 2005. We recorded this on 2006-01-01T00:00:00Z 
+)</query><query name="Luna in SFO" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: Luna lived in San Francisco between 2001 and 2005. We recorded this on 2006-01-01T00:00:00Z
    Output: your query returned an empty sequence :)
 
 let $root := &lt;root&gt;
@@ -28,7 +28,7 @@ let $root := &lt;root&gt;
     &lt;sem:object&gt;CA&lt;/sem:object&gt;
   &lt;/sem:triple&gt;
   &lt;/sem:triples&gt;&lt;/root&gt;
-    
+
 return (
 temporal:document-insert("myTemporal","triple.xml",$root),
 temporal:statement-set-system-time(xs:dateTime("2006-01-01T00:00:00Z")))</query><query name="Luna Moved to Denver" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: Luna moved in Denver on 2004-01-01T00:00:00Z and lived there until 2007-01-01T00:00:00Z. We knew about this on 2008-01-01T00:00:00Z :)
@@ -50,11 +50,11 @@ let $root := &lt;root&gt;
     &lt;sem:object&gt;CO&lt;/sem:object&gt;
   &lt;/sem:triple&gt;
   &lt;/sem:triples&gt;&lt;/root&gt;
-    
+
 return (
 temporal:document-insert("myTemporal","triple.xml",$root),
 temporal:statement-set-system-time(xs:dateTime("2008-01-01T00:00:00Z")))</query><query name="BiTemporal Query" focus="false" active="true" content-source="7900001892146779296:0:Apps" mode="xquery">(: Query bi-temporally :)
-(: Output: Should return 3 documents.  
+(: Output: Should return 3 documents.
    1. What we know since 2008-01-01T00:00:00Z. That Luna lived in Denver between 2004-01-01T00:00:00Z and 2007-01-01T00:00:00Z
    2. What we knew between 2006-01-01T00:00:00Z and 2008-01-01T00:00:00Z. That Luna lived in San Francisco between 2001-01-01T00:00:00Z and 2006-01-01T00:00:00Z
    3. What we know between 2008-01-01T00:00:00Z and now. That Luna lived in San Francisco between 2001-01-01T00:00:00Z and 2004-01-01T00:00:00Z
@@ -74,11 +74,11 @@ cts:search(fn:doc(),
 :)
 
 let $q := '
-  SELECT 
+  SELECT
     ?city ?state
   WHERE {
     &lt;Luna&gt; &lt;city&gt; ?city .
-    ?city &lt;state&gt; ?state . 
+    ?city &lt;state&gt; ?state .
   }
 '
 return
@@ -97,16 +97,17 @@ return
         cts:collection-query("myTemporal")
      ))
    )
- )</query><query name="Where Luna lived  between 2000 &amp; 2007" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: Which cities and states did Luna live in between 2000-01-01T00:00:00Z and 2007-01-01T00:00:00Z. City, state info comes from triples 
+ )</query><query name="Where Luna lived  between 2000 &amp; 2007" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: Which cities and states did Luna live in between 2000-01-01T00:00:00Z and 2007-01-01T00:00:00Z. City, state info comes from triples
    Should return San Francisco as the city and California as the state AND
-   Should return Denver as the city and Colorado as the state 
+   Should return Denver as the city and Colorado as the state
 :)
 
 let $q := '
-SELECT 
-  ?o
+SELECT
+  ?city ?state
 WHERE {
-  &lt;Luna&gt; &lt;city&gt; ?o
+  &lt;Luna&gt; &lt;city&gt; ?city .
+  ?city &lt;state&gt; ?state .
   }
   '
 return
@@ -131,11 +132,11 @@ return
 import module namespace sem = "http://marklogic.com/semantics" at "MarkLogic/semantics.xqy";
 
 let $q := '
-  SELECT 
+  SELECT
     ?city ?state
   WHERE {
     "Luna" &lt;city&gt; ?city .
-    ?city &lt;state&gt; ?state . 
+    ?city &lt;state&gt; ?state .
   }
 '
 return
@@ -151,17 +152,17 @@ return
         cts:period(
           xs:dateTime("2006-01-01T00:00:00Z")) )
       )
-    )</query><query name="In 2007, what we did know about where Eva lived" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: TODO What did I know during the year 2007 about where Luna lived. We search on system time 
+    )</query><query name="In 2007, what we did know about where Eva lived" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: TODO What did I know during the year 2007 about where Luna lived. We search on system time
    At this time, we know that Luna lived in SFO and Denver. City, state info comes from triples :)
 
 import module namespace sem = "http://marklogic.com/semantics" at "MarkLogic/semantics.xqy";
 
 let $q := '
-  SELECT 
+  SELECT
     ?city ?state
   WHERE {
     &lt;Luna&gt; &lt;city&gt; ?city .
-    ?city &lt;state&gt; ?state . 
+    ?city &lt;state&gt; ?state .
   }
 '
 
@@ -181,9 +182,9 @@ return
           cts:collection-query("myTemporal")
       ))
     )
-  )</query><query name="In 2007, what we did know between 2004 and 2005" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: TODO What did I know  during the year 2007-01-01T00:00:00Z about where Luna lived between 2004-01-01T00:00:00Z and 2005-01-01T00:00:00Z. We search on 
+  )</query><query name="In 2007, what we did know between 2004 and 2005" focus="false" active="true" content-source="as:11162580126874597628:" mode="xquery">(: TODO What did I know  during the year 2007-01-01T00:00:00Z about where Luna lived between 2004-01-01T00:00:00Z and 2005-01-01T00:00:00Z. We search on
    system time and valid time :)
-   
+
 let $q := '????
 '
 
@@ -204,10 +205,10 @@ return
           "????",
           "ISO_CONTAINS",
           cts:period(
-            xs:dateTime("2004-01-01T00:00:00Z"),            
+            xs:dateTime("2004-01-01T00:00:00Z"),
             xs:dateTime("2005-01-01T00:00:00Z")) ),
         cts:collection-query("myTemporal")
-      ))     
+      ))
     )
   )
 
