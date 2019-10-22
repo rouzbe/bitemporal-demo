@@ -1,0 +1,264 @@
+<export><workspace name="TemporalSemantics"><query name="conf.1.createRangeIndex" focus="false" active="true" content-source="as:13134076190478922058:" mode="xquery">xquery version "1.0-ml";
+import module namespace admin = "http://marklogic.com/xdmp/admin" 
+    at "/MarkLogic/admin.xqy";
+    
+(: 
+  create range index on systemStart,systemEnd,validStart,validEnd 
+  expect empty sequence as result
+:)    
+   
+let $config := admin:get-configuration()
+let $dbid := xdmp:database("Temp-Test")
+
+let $validStart := admin:database-range-element-index("dateTime", "", "validStart", "", fn:false() )
+let $validEnd := admin:database-range-element-index("dateTime", "", "validEnd", "", fn:false() )
+let $systemStart := admin:database-range-element-index("dateTime", "", "systemStart", "", fn:false() )
+let $systemEnd := admin:database-range-element-index("dateTime", "", "systemEnd", "", fn:false() )
+
+let $config := admin:database-add-range-element-index($config, $dbid, $validStart)
+let $config := admin:database-add-range-element-index($config, $dbid, $validEnd)
+let $config := admin:database-add-range-element-index($config, $dbid, $systemStart)
+let $config := admin:database-add-range-element-index($config, $dbid, $systemEnd)
+
+return
+    admin:save-configuration($config)
+</query><query name="conf.2.createAxis" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml"; 
+import module namespace temporal = "http://marklogic.com/xdmp/temporal" 
+    at "/MarkLogic/temporal.xqy";
+
+(: Make sure the right db is selected (e.g. Temp-Test) :)
+
+(:
+  Create temporal axis myValid and mySystem
+  expect empty sequence as result
+:)
+
+temporal:axis-create(
+    "valid",
+    cts:element-reference(xs:QName("validStart")),
+    cts:element-reference(xs:QName("validEnd"))),
+
+temporal:axis-create(
+    "system",
+    cts:element-reference(xs:QName("systemStart")),
+    cts:element-reference(xs:QName("systemEnd")));
+</query><query name="conf.3.checkAxis" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml"; 
+import module namespace temporal = "http://marklogic.com/xdmp/temporal" 
+    at "/MarkLogic/temporal.xqy";
+    
+(: Make sure the right db is selected (e.g. Temp-Test) :)
+
+temporal:axes()
+</query><query name="conf.4.createCollection" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml";
+import module namespace temporal = "http://marklogic.com/xdmp/temporal" 
+     at "/MarkLogic/temporal.xqy";
+     
+(: Make sure the right db is selected (e.g. Temp-Test) :)
+
+(: 
+  Create temporal collection named myTemporal,
+  expect empty sequence
+:)
+
+temporal:collection-create("temporalCollection", "system", "valid")
+</query><query name="conf.5.checkCollection" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml";
+import module namespace temporal = "http://marklogic.com/xdmp/temporal" 
+     at "/MarkLogic/temporal.xqy";
+     
+(: Make sure the right db is selected (e.g. Temp-Test) :)
+
+temporal:collections()
+    </query><query name="6.normalInsert" focus="false" active="true" content-source="as:13134076190478922058:" mode="xquery">(: A collection is a way to group documents together uniquely identified by a string
+ one document can be in any number of collections
+ return empty string means document is ingested
+
+ temporal collection is different, 
+ TODO - try putting a temporal collection in the collection setting :)
+
+xdmp:document-insert(
+  "foo.xml",                (: URI :)
+  &lt;foo&gt;bar&lt;/foo&gt;,           (: content :)
+  xdmp:default-permissions(), (: permission setting :)
+  ("collection1","col2"),    (: collection setting :)
+  10
+)</query><query name="7.retrieveDocument" focus="false" active="true" content-source="as:13134076190478922058:" mode="xquery">(: Two ways of seeing a document:
+ 1. Use fn.doc() function
+ 2. Click "Explore" button and navigate :)
+
+fn:doc("foo.xml")</query><query name="test.1.insertNew" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml";
+
+(: Luna lived in San Francisco between 2001-01-01T00:00:00Z and 2006-01-01T00:00:00Z. :)
+(: Output: your query returns an empty sequence. :)
+
+let $root := 
+&lt;temporalTriples&gt;
+  &lt;systemStart /&gt;
+  &lt;systemEnd /&gt;
+  &lt;validStart&gt;2001-01-01T00:00:00Z&lt;/validStart&gt;
+  &lt;validEnd&gt;2006-01-01T00:00:00Z&lt;/validEnd&gt;
+  &lt;sem:triples xmlns:sem="http://marklogic.com/semantics"&gt;
+    &lt;sem:triple&gt;
+      &lt;sem:subject&gt;Luna&lt;/sem:subject&gt;
+      &lt;sem:predicate&gt;city&lt;/sem:predicate&gt;
+      &lt;sem:object&gt;San Francisco&lt;/sem:object&gt;
+    &lt;/sem:triple&gt;
+    &lt;sem:triple&gt;
+      &lt;sem:subject&gt;San Francisco&lt;/sem:subject&gt;
+      &lt;sem:predicate&gt;state&lt;/sem:predicate&gt;
+      &lt;sem:object&gt;CA&lt;/sem:object&gt;
+    &lt;/sem:triple&gt;
+  &lt;/sem:triples&gt;
+&lt;/temporalTriples&gt;
+    
+return (
+  temporal:document-insert("temporalCollection", "triple.xml", $root)
+)</query><query name="test.2.update" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml";
+
+(: Luna moved in Denver on 2005-01-01T00:00:01Z and lived there until 2007-01-01T00:00:00Z. :)
+(: Output: your query returns an empty sequence. :)
+
+let $root := 
+&lt;temporalTriples&gt;
+  &lt;systemStart /&gt;
+  &lt;systemEnd /&gt;
+  &lt;validStart&gt;2005-01-01T00:00:01Z&lt;/validStart&gt;
+  &lt;validEnd&gt;2007-01-01T00:00:00Z&lt;/validEnd&gt;
+  &lt;sem:triples xmlns:sem="http://marklogic.com/semantics"&gt;
+    &lt;sem:triple&gt;
+      &lt;sem:subject&gt;Luna&lt;/sem:subject&gt;
+      &lt;sem:predicate&gt;city&lt;/sem:predicate&gt;
+      &lt;sem:object&gt;Denver&lt;/sem:object&gt;
+    &lt;/sem:triple&gt;
+    &lt;sem:triple&gt;
+      &lt;sem:subject&gt;Denver&lt;/sem:subject&gt;
+      &lt;sem:predicate&gt;state&lt;/sem:predicate&gt;
+      &lt;sem:object&gt;CO&lt;/sem:object&gt;
+    &lt;/sem:triple&gt;
+  &lt;/sem:triples&gt;
+&lt;/temporalTriples&gt;
+    
+return (
+  temporal:document-insert("temporalCollection", "triple.xml", $root)
+)</query><query name="test.3.query.old" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml";
+
+(: 
+  Which city and state did Luna live in on 2002-01-01T00:00:00Z. 
+  Output: City and state info comes from triples. Should return San Francisco as the city and CA as the state.
+:)
+
+let $q := '
+  SELECT 
+    ?city ?state
+  WHERE {
+    &lt;Luna&gt; &lt;city&gt; ?city .
+    ?city &lt;state&gt; ?state . 
+  }
+'
+return
+  sem:sparql(
+    $q,
+    (),
+    (),
+    sem:store(
+      (),
+      cts:and-query((
+        cts:period-range-query(
+          "valid",
+          "ALN_CONTAINS",
+          cts:period(
+            xs:dateTime("2002-01-01T00:00:00Z") )),
+        cts:collection-query("temporalCollection")
+     ))
+   )
+ )</query><query name="test.3.query.new" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml";
+
+(: 
+  Which city and state did Luna live in on 2006-01-01T00:00:00Z. 
+  Output: City and state info comes from triples. Should return Denver as the city and CO as the state.
+:)
+
+let $q := '
+  SELECT 
+    ?city ?state
+  WHERE {
+    &lt;Luna&gt; &lt;city&gt; ?city .
+    ?city &lt;state&gt; ?state . 
+  }
+'
+return
+  sem:sparql(
+    $q,
+    (),
+    (),
+    sem:store(
+      (),
+      cts:and-query((
+        cts:period-range-query(
+          "valid",
+          "ALN_CONTAINS",
+          cts:period(
+            xs:dateTime("2006-01-01T00:00:00Z") )),
+        cts:collection-query("temporalCollection")
+     ))
+   )
+ )</query><query name="test.3.query.overlap" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml";
+
+(: 
+   Which cities and states did Luna live in between 2000-01-01T00:00:00Z and 2007-01-01T00:00:00Z. 
+   Output: City, state info comes from triples. Should return San Francisco as the city and California as the state AND
+   Should return Denver as the city and Colorado as the state.
+:)
+
+let $q := '
+SELECT 
+  ?city ?state
+WHERE {
+  &lt;Luna&gt; &lt;city&gt; ?city .
+  ?city &lt;state&gt; ?state .
+}
+'
+return
+  sem:sparql(
+    $q,
+    (),
+    (),
+    sem:store(
+      (),
+      cts:and-query((
+        cts:period-range-query(
+          "valid",
+          "ISO_OVERLAPS",
+          cts:period(
+            xs:dateTime("2000-01-01T00:00:00Z"),
+            xs:dateTime("2007-01-01T00:00:00Z")) ),
+        cts:collection-query("temporalCollection")
+      ))
+    )
+  )</query><query name="test.3.query.latest" focus="false" active="true" content-source="1289115484875776579:0:Apps" mode="xquery">xquery version "1.0-ml";
+
+(: 
+   What do we know about the latest city and state that Luna lived in. 
+   Output: City, state info comes from triples. Should return Denver as the city and CO as the state.
+:)
+
+let $q := '
+SELECT 
+  ?city ?state
+WHERE {
+  &lt;Luna&gt; &lt;city&gt; ?city .
+  ?city &lt;state&gt; ?state .
+}
+'
+return
+  sem:sparql(
+    $q,
+    (),
+    (),
+    sem:store(
+      (),
+          cts:collection-query("latest")
+      )
+  )</query><query name="test.3.query.latest.sparql" focus="true" active="true" content-source="1289115484875776579:0:Apps" mode="sparql"># Get the latest triples using SPARQL
+
+SELECT * FROM &lt;latest&gt; WHERE { ?s ?p ?o . }
+</query></workspace></export>
